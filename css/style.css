@@ -123,6 +123,21 @@ body {
   opacity: 0.7;
 }
 
+.panel-footer .token-cost {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.panel-footer .token-cost::before {
+  content: "·";
+  margin-right: 4px;
+  color: var(--muted-foreground);
+  opacity: 0.5;
+}
+
 .model-selector {
   display: inline-flex;
   align-items: center;

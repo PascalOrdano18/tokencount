@@ -7,6 +7,8 @@ import {
   loadModel,
   isReady,
   getStatus,
+  calculateCost,
+  formatCost,
 } from "./tokenizer.js";
 import { encodePayload, decodePayload, decodePayloadBase64 } from "./zbase32.js";
 
@@ -50,6 +52,10 @@ const modelDropdown = document.getElementById("model-dropdown");
 // Token counts (in panel footers)
 const tokenCountA = document.getElementById("tokencount-a");
 const tokenCountB = document.getElementById("tokencount-b");
+
+// Token costs (in panel footers)
+const tokenCostA = document.getElementById("token-cost-a");
+const tokenCostB = document.getElementById("token-cost-b");
 
 // Char counts
 const charCountA = document.getElementById("char-count-a");
@@ -230,6 +236,26 @@ function renderModelDisplay() {
   const bB = bestTokenCount(textB, "b");
   const prefixB = bB.exact ? "" : "~";
   tokenCountB.textContent = prefixB + formatNumber(bB.count) + " tok";
+
+  // Update token costs in panel footers
+  const costA = calculateCost(bA.count, model);
+  const costB = calculateCost(bB.count, model);
+  const costPrefixA = bA.exact ? "" : "~";
+  const costPrefixB = bB.exact ? "" : "~";
+
+  if (costA !== null && bA.count > 0) {
+    tokenCostA.textContent = costPrefixA + formatCost(costA);
+    tokenCostA.style.display = "";
+  } else {
+    tokenCostA.style.display = "none";
+  }
+
+  if (costB !== null && bB.count > 0) {
+    tokenCostB.textContent = costPrefixB + formatCost(costB);
+    tokenCostB.style.display = "";
+  } else {
+    tokenCostB.style.display = "none";
+  }
 
   // Update char counts
   charCountA.textContent = formatNumber(textA.length) + " chr";

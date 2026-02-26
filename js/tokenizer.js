@@ -5,16 +5,17 @@
 
 import { loadClaudeTokenizer, getClaudeTokenizer } from "./claude-tokenizer.js";
 
+// inputPrice: cost per 1 million input tokens in USD (null = free/self-hosted)
 export const MODEL_PROFILES = [
-  { name: "claude",   displayName: "Claude",   label: "Claude 4.6 Opus (and all Claude 3+ models)",   color: "#d4a574", type: "ctoc" },
-  { name: "openai",   displayName: "GPT-5",    label: "OpenAI tiktoken (GPT 5.2, Phi-4, and others)", color: "#10a37f", type: "gpt" },
-  { name: "gemini",   displayName: "Gemini",   label: "Gemini 3.1 Pro (and all Gemini models)",       color: "#4285f4", type: "hf", hfRepo: "Xenova/gemma-2-tokenizer" },
-  { name: "deepseek", displayName: "DeepSeek", label: "DeepSeek V3 (and others)",                     color: "#4D6BFE", type: "hf", hfRepo: "deepseek-ai/DeepSeek-V3" },
-  { name: "qwen",     displayName: "Qwen",     label: "Qwen 3 (and Qwen 2.5+ models)",                color: "#ff6a3d", type: "hf", hfRepo: "Qwen/Qwen3-0.6B" },
-  { name: "minimax",  displayName: "MiniMax",  label: "MiniMax-Text-01",                              color: "#a78bfa", type: "hf", hfRepo: "MiniMaxAI/MiniMax-Text-01" },
-  { name: "llama",    displayName: "Llama",    label: "Llama 3 (all Llama 3 and 4 models)",           color: "#0668E1", type: "hf", hfRepo: "Xenova/llama4-tokenizer" },
-  { name: "mistral",  displayName: "Mistral",  label: "Mistral (Nemo, Small 24B, Pixtral)",           color: "#F4A100", type: "hf", hfRepo: "mistralai/Mistral-Nemo-Instruct-2407" },
-  { name: "grok",     displayName: "Grok",     label: "Grok (1 and 2, 3 and 4 unknown)",              color: "#E63946", type: "hf", hfRepo: "Xenova/grok-1-tokenizer" },
+  { name: "claude",   displayName: "Claude",   label: "Claude 4.6 Opus (and all Claude 3+ models)",   color: "#d4a574", type: "ctoc", inputPrice: 3.00 },
+  { name: "openai",   displayName: "GPT-5",    label: "OpenAI tiktoken (GPT 5.2, Phi-4, and others)", color: "#10a37f", type: "gpt",  inputPrice: 2.50 },
+  { name: "gemini",   displayName: "Gemini",   label: "Gemini 3.1 Pro (and all Gemini models)",       color: "#4285f4", type: "hf", hfRepo: "Xenova/gemma-2-tokenizer", inputPrice: 1.25 },
+  { name: "deepseek", displayName: "DeepSeek", label: "DeepSeek V3 (and others)",                     color: "#4D6BFE", type: "hf", hfRepo: "deepseek-ai/DeepSeek-V3", inputPrice: 0.27 },
+  { name: "qwen",     displayName: "Qwen",     label: "Qwen 3 (and Qwen 2.5+ models)",                color: "#ff6a3d", type: "hf", hfRepo: "Qwen/Qwen3-0.6B", inputPrice: null },
+  { name: "minimax",  displayName: "MiniMax",  label: "MiniMax-Text-01",                              color: "#a78bfa", type: "hf", hfRepo: "MiniMaxAI/MiniMax-Text-01", inputPrice: 0.70 },
+  { name: "llama",    displayName: "Llama",    label: "Llama 3 (all Llama 3 and 4 models)",           color: "#0668E1", type: "hf", hfRepo: "Xenova/llama4-tokenizer", inputPrice: null },
+  { name: "mistral",  displayName: "Mistral",  label: "Mistral (Nemo, Small 24B, Pixtral)",           color: "#F4A100", type: "hf", hfRepo: "mistralai/Mistral-Nemo-Instruct-2407", inputPrice: 0.30 },
+  { name: "grok",     displayName: "Grok",     label: "Grok (1 and 2, 3 and 4 unknown)",              color: "#E63946", type: "hf", hfRepo: "Xenova/grok-1-tokenizer", inputPrice: 5.00 },
 ];
 
 // State — all mutable tokenizer state lives here
@@ -72,6 +73,25 @@ export function countAllTokenizers(text) {
     ready: isReady(p.name),
     status: getStatus(p.name),
   }));
+}
+
+// Calculate cost in USD for a given token count and model
+// Returns null if the model has no pricing (free/self-hosted)
+export function calculateCost(tokenCount, modelName) {
+  const profile = MODEL_PROFILES.find((p) => p.name === modelName);
+  if (!profile || profile.inputPrice === null) return null;
+  // inputPrice is per 1M tokens
+  return (tokenCount / 1_000_000) * profile.inputPrice;
+}
+
+// Format cost as a string (e.g., "$0.003" or "< $0.001")
+export function formatCost(cost) {
+  if (cost === null) return null;
+  if (cost === 0) return "$0";
+  if (cost < 0.001) return "< $0.001";
+  if (cost < 0.01) return `$${cost.toFixed(4)}`;
+  if (cost < 1) return `$${cost.toFixed(3)}`;
+  return `$${cost.toFixed(2)}`;
 }
 
 // Progressively decode token IDs into an array of token strings
